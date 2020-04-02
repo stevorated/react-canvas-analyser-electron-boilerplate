@@ -1,35 +1,19 @@
 import React, { useRef, useEffect, useState } from 'react';
+import dotenv from 'dotenv';
+import path from 'path';
 
 import { AudioHandler } from './components/AudioHandler';
 import { Container } from './components';
 
 const handler = new AudioHandler();
+const { PATH } = dotenv.config().parsed || { PATH: '' };
 
-// some paths/urls to begin with
-// lots of paths/urls to load in the background
-// should be used for fast load (could be used to lazy load for example)
 const paths = [
-    'C:\\Users\\garbe\\Desktop\\album\\Is It Always Binary.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\Fragments Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\2 Pieces Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\War Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\Pick Me Up Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\Fragments Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\2 Pieces Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\War Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\Pick Me Up Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\Fragments Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\2 Pieces Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\War Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\Pick Me Up Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\Fragments Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\2 Pieces Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\War Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\Pick Me Up Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\Fragments Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\2 Pieces Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\War Master.mp3',
-    'C:\\Users\\garbe\\Desktop\\album\\album_1\\Pick Me Up Master.mp3',
+    path.join(PATH, 'album/Is It Always Binary.mp3'),
+    path.join(PATH, 'album/album_1/Fragments Master.mp3'),
+    path.join(PATH, 'album/album_1/War Master.mp3'),
+    path.join(PATH, 'album/album_1/2 Pieces Master.mp3'),
+    path.join(PATH, 'album/album_1/Son of a Gun Master.mp3'),
 ];
 
 export function App() {
@@ -66,10 +50,11 @@ export function App() {
 
         // for smooth user experience should be called in separate from loadFiles
         // as lazy loader
+
         handler.addFiles(restOfPaths).then(() => {
             console.log('loaded some more paths/urls...');
         });
-    }, [])
+    }, []);
 
     return <Container ready={ready} handler={handler} frequencyC={frequencyC} sinewaveC={sinewaveC} />;
 }

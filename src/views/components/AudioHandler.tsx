@@ -45,29 +45,18 @@ export class AudioHandler {
     };
 
     addFiles = async (urls: string[]) => {
-        const cartridge = await Promise.all(
-            urls.map(url => axios.get(url, { responseType: 'arraybuffer' }))
-        );
+        const cartridge = await Promise.all(urls.map((url) => axios.get(url, { responseType: 'arraybuffer' })));
 
-        const buffers = await Promise.all(
-            cartridge.map(res => this.context?.decodeAudioData(res.data))
-        );
+        const buffers = await Promise.all(cartridge.map((res) => this.context?.decodeAudioData(res.data)));
 
         this.buffers = this.buffers.concat(buffers);
-
         if (this.status !== 'PLAY') {
             this.status = 'READY';
         }
     };
 
-    loadFiles = async (
-        urls: string[],
-        { frequencyC, sinewaveC }: Displays,
-        styles: Styles
-    ): Promise<void> => {
-        const cartridge = await Promise.all(
-            urls.map(url => axios.get(url, { responseType: 'arraybuffer' }))
-        );
+    loadFiles = async (urls: string[], { frequencyC, sinewaveC }: Displays, styles: Styles): Promise<void> => {
+        const cartridge = await Promise.all(urls.map((url) => axios.get(url, { responseType: 'arraybuffer' })));
 
         this.grabAudioContext();
 
@@ -80,15 +69,11 @@ export class AudioHandler {
         this.frequencyC = frequencyC;
         this.gainNode = this.context.createGain();
 
-        this.buffers = await Promise.all(
-            cartridge.map(res => this.context?.decodeAudioData(res.data))
-        );
+        this.buffers = await Promise.all(cartridge.map((res) => this.context?.decodeAudioData(res.data)));
 
         this.analyser.fftSize = styles.fftSize;
 
-        this.frequencyDataArray = new Uint8Array(
-            this.analyser.frequencyBinCount
-        );
+        this.frequencyDataArray = new Uint8Array(this.analyser.frequencyBinCount);
 
         this.sinewaveDataArray = new Uint8Array(this.analyser.fftSize);
 
@@ -100,32 +85,18 @@ export class AudioHandler {
         }
     };
 
-    createSinewaveCavasContext = (
-        sinewaveC: HTMLCanvasElement | null | undefined
-    ) => {
+    createSinewaveCavasContext = (sinewaveC: HTMLCanvasElement | null | undefined) => {
         if (!sinewaveC) return;
 
         this.sinewaveСanvasCtx = sinewaveC.getContext('2d');
-        this.sinewaveСanvasCtx?.clearRect(
-            0,
-            0,
-            sinewaveC.width,
-            sinewaveC.height
-        );
+        this.sinewaveСanvasCtx?.clearRect(0, 0, sinewaveC.width, sinewaveC.height);
     };
 
-    createFrequencyCanvasContext = (
-        frequencyC: HTMLCanvasElement | null | undefined
-    ) => {
+    createFrequencyCanvasContext = (frequencyC: HTMLCanvasElement | null | undefined) => {
         if (!frequencyC) return;
 
         this.frequencyСanvasCtx = frequencyC.getContext('2d');
-        this.frequencyСanvasCtx?.clearRect(
-            0,
-            0,
-            frequencyC.width,
-            frequencyC.height
-        );
+        this.frequencyСanvasCtx?.clearRect(0, 0, frequencyC.width, frequencyC.height);
     };
 
     getBuffers = () => {
@@ -149,13 +120,7 @@ export class AudioHandler {
     };
 
     play = (resumeTime = this.currentTime ? this.currentTime || 0 : 0) => {
-        if (
-            this.status === 'PLAY' ||
-            this.status === 'INIT' ||
-            !this.context ||
-            !this.gainNode ||
-            !this.analyser
-        ) {
+        if (this.status === 'PLAY' || this.status === 'INIT' || !this.context || !this.gainNode || !this.analyser) {
             return;
         }
 
@@ -257,13 +222,7 @@ export class AudioHandler {
     };
 
     private drawSinewave = () => {
-        if (
-            !this.sinewaveC ||
-            !this.analyser ||
-            !this.sinewaveDataArray ||
-            !this.sinewaveСanvasCtx ||
-            !this.styles
-        ) {
+        if (!this.sinewaveC || !this.analyser || !this.sinewaveDataArray || !this.sinewaveСanvasCtx || !this.styles) {
             return;
         }
 
@@ -272,12 +231,7 @@ export class AudioHandler {
 
         this.sinewaveСanvasCtx.fillStyle = this.styles.fillStyle;
         this.sinewaveСanvasCtx.globalAlpha = 0.3;
-        this.sinewaveСanvasCtx.fillRect(
-            0,
-            0,
-            this.sinewaveC.width,
-            this.sinewaveC.height
-        );
+        this.sinewaveСanvasCtx.fillRect(0, 0, this.sinewaveC.width, this.sinewaveC.height);
         this.sinewaveСanvasCtx.lineWidth = this.styles.lineWidth;
 
         this.sinewaveСanvasCtx.strokeStyle = this.styles.strokeStyle;
@@ -298,10 +252,7 @@ export class AudioHandler {
             x += sliceWidth;
         }
 
-        this.sinewaveСanvasCtx.lineTo(
-            this.sinewaveC.width,
-            this.sinewaveC.height / 2
-        );
+        this.sinewaveСanvasCtx.lineTo(this.sinewaveC.width, this.sinewaveC.height / 2);
         this.sinewaveСanvasCtx.stroke();
     };
 
@@ -321,16 +272,10 @@ export class AudioHandler {
         requestAnimationFrame(this.drawFrequency);
 
         this.frequencyСanvasCtx.fillStyle = this.styles.fillStyle;
-        this.frequencyСanvasCtx?.fillRect(
-            0,
-            0,
-            this.frequencyC.width,
-            this.frequencyC.height
-        );
+        this.frequencyСanvasCtx?.fillRect(0, 0, this.frequencyC.width, this.frequencyC.height);
         this.frequencyСanvasCtx?.beginPath();
 
-        const barWidth =
-            (this.frequencyC.width / this.analyser.frequencyBinCount) * 2.5;
+        const barWidth = (this.frequencyC.width / this.analyser.frequencyBinCount) * 2.5;
         let barHeight;
         let x = 0;
 
@@ -338,12 +283,7 @@ export class AudioHandler {
             barHeight = this.frequencyDataArray[i];
 
             this.frequencyСanvasCtx.fillStyle = this.styles.strokeStyle;
-            this.frequencyСanvasCtx.fillRect(
-                x,
-                this.frequencyC.height - barHeight / 2,
-                barWidth,
-                barHeight / 2
-            );
+            this.frequencyСanvasCtx.fillRect(x, this.frequencyC.height - barHeight / 2, barWidth, barHeight / 2);
 
             x += barWidth + 1;
         }

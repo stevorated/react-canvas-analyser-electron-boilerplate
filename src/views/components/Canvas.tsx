@@ -14,7 +14,7 @@ type Props = {
 
 type Display = 'both' | 'freq' | 'sine';
 
-export default function Canvas({
+export function Canvas({
     frequencyC,
     sinewaveC,
     frequencyCanvasStyles,
@@ -27,20 +27,20 @@ export default function Canvas({
     return (
         <ContainerDiv style={{ ...containerStyles }}>
             {display !== 'sine' && (
-                <canvas
+                <CanvasElement
                     ref={frequencyC}
                     width={width ? `${width}px` : '1024'}
                     height={height ? `${height}px` : '150'}
                     style={{ ...frequencyCanvasStyles }}
-                ></canvas>
+                />
             )}
             {display !== 'freq' && (
-                <canvas
+                <CanvasElement
                     ref={sinewaveC}
                     width={width ? `${width}px` : '1024'}
                     height={height ? `${height}px` : '150'}
                     style={{ ...sinewaveCanvasStyles }}
-                ></canvas>
+                />
             )}
         </ContainerDiv>
     );
@@ -59,4 +59,9 @@ to {
 const ContainerDiv = styled.div`
     animation-name: ${fadeIn};
     animation-duration: 8000ms;
+`;
+
+const CanvasElement = styled.canvas`
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    border-radius: 10px;
 `;

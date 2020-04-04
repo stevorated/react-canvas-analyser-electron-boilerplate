@@ -10,7 +10,7 @@ type Props = {
 
 const defaultSettings: BrowserWindowConstructorOptions = {
     width: 1000,
-    height: 600,
+    height: process.env.NODE_ENV === 'production' ? 340 : 600,
     minWidth: 1000,
     icon: path.join(__dirname, '/icon.png'),
     webPreferences: {

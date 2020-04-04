@@ -13,31 +13,21 @@ type Props = {
     onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 };
 
-export function RangeInput({
-    id,
-    name,
-    min,
-    max,
-    value,
-    onChange,
-    maxText,
-    minText,
-    width,
-}: Props) {
+export function RangeInput({ id, name, min, max, value, onChange, maxText, minText, width }: Props) {
     return (
         <ContainerDiv>
-            <Span>{min ?? 0}</Span>
+            <Span>{minText}</Span>
             <Range
                 id={id}
                 type="range"
                 name={name}
-                max={maxText ?? max}
-                min={minText ?? min ?? 0}
+                max={max}
+                min={min ?? 0}
                 value={value}
                 onChange={onChange}
                 width={width}
             />
-            <Span>{max}</Span>
+            <Span>{maxText}</Span>
         </ContainerDiv>
     );
 }
@@ -49,6 +39,8 @@ const ContainerDiv = styled.div`
 `;
 
 const Span = styled.span`
+    font-size: 14px;
+    color: grey;
     margin: 0 4px;
 `;
 

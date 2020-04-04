@@ -1,1 +1,3 @@
-export * from './Container';
+export { Player } from './Player';
+export { Canvas } from './Canvas';
+export { AudioHandler } from './AudioHandler';

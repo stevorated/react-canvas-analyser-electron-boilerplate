@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 const merge = require('webpack-merge');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -21,6 +22,9 @@ const config = {
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/views/index.html',
+        }),
+        new webpack.DefinePlugin({
+            'process.env.DESKTOP_PATH': 'C:\\Users\\garbe\\Desktop\\',
         }),
     ],
 };

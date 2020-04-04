@@ -13,15 +13,21 @@ type Displays = {
     sinewaveC?: HTMLCanvasElement | null;
 };
 
-type AudioHandlerStatus = 'INIT' | 'READY' | 'PLAY' | 'PAUSE' | 'STOP' | 'ADD';
+type Events = 'onsongend' | 'changeposition' | 'cleancartridge';
+
+type AudioHandlerStatus = 'INIT' | 'READY' | 'PLAY' | 'PAUSE' | 'STOP' | 'ADD' | 'BUSY';
 
 export class AudioHandler {
-    private status: AudioHandlerStatus = 'INIT';
-    private currentTime: number | null = null;
-    private time: number | null = null;
+    private position: number | null = null;
+    private timestamp: number | null = null;
+    private timestampHandler: NodeJS.Timeout | null = null;
+    private sampleRate: number | null = null;
+    private duration = 0;
     private pointer = 0;
-    private volume = 0.1;
+    private volume = 0.5;
     private releaseTime = 0.1;
+    private status: AudioHandlerStatus = 'INIT';
+    private timestampIntervalTick = 1000;
 
     private sinewaveC: HTMLCanvasElement | null | undefined = null;
     private frequencyC: HTMLCanvasElement | null | undefined = null;
@@ -36,10 +42,9 @@ export class AudioHandler {
     private frequencyСanvasCtx: CanvasRenderingContext2D | null = null;
 
     private gainNode: GainNode | null = null;
-    private buffer: AudioBuffer | null = null;
     private buffers: (AudioBuffer | undefined)[] = [];
 
-    grabAudioContext = (): void => {
+    private grabAudioContext = (): void => {
         this.context = new window.AudioContext();
         this.analyser = this.context.createAnalyser();
     };
@@ -71,6 +76,9 @@ export class AudioHandler {
 
         this.buffers = await Promise.all(cartridge.map((res) => this.context?.decodeAudioData(res.data)));
 
+        this.updateDuration();
+        this.updateSampleRate();
+
         this.analyser.fftSize = styles.fftSize;
 
         this.frequencyDataArray = new Uint8Array(this.analyser.frequencyBinCount);
@@ -85,130 +93,66 @@ export class AudioHandler {
         }
     };
 
-    createSinewaveCavasContext = (sinewaveC: HTMLCanvasElement | null | undefined) => {
+    clean = () => {
+        this.buffers = [];
+        this.stop();
+        this.duration = 0;
+        this.status = 'INIT';
+        this.dispatchEvent('cleancartridge');
+    };
+
+    private createSinewaveCavasContext = (sinewaveC: HTMLCanvasElement | null | undefined) => {
         if (!sinewaveC) return;
 
         this.sinewaveСanvasCtx = sinewaveC.getContext('2d');
         this.sinewaveСanvasCtx?.clearRect(0, 0, sinewaveC.width, sinewaveC.height);
     };
 
-    createFrequencyCanvasContext = (frequencyC: HTMLCanvasElement | null | undefined) => {
+    private createFrequencyCanvasContext = (frequencyC: HTMLCanvasElement | null | undefined) => {
         if (!frequencyC) return;
 
         this.frequencyСanvasCtx = frequencyC.getContext('2d');
         this.frequencyСanvasCtx?.clearRect(0, 0, frequencyC.width, frequencyC.height);
     };
 
-    getBuffers = () => {
-        return this.buffers;
+    updateSampleRate = () => {
+        this.sampleRate = this.buffers[this.pointer]?.sampleRate || 0;
+    };
+
+    getSampleRate = () => {
+        return this.sampleRate;
+    };
+
+    getPointer = () => {
+        return this.pointer;
+    };
+
+    updateDuration = () => {
+        this.duration = this.buffers[this.pointer]?.duration || 0;
+    };
+
+    getDuration = () => {
+        return this.duration;
     };
 
     getStatus = () => {
         return this.status;
     };
 
-    getCurrentTime = () => {
-        return this.context?.currentTime;
+    setPosition = (position: number) => {
+        this.position = position;
     };
 
-    setCurrentTime = (time: number) => {
-        this.currentTime = time;
+    getPosition = () => {
+        return this.position || 0;
     };
 
-    getDuration = () => {
-        return this.buffer?.duration;
-    };
-
-    play = (resumeTime = this.currentTime ? this.currentTime || 0 : 0) => {
-        if (this.status === 'PLAY' || this.status === 'INIT' || !this.context || !this.gainNode || !this.analyser) {
-            return;
-        }
-
-        this.source = this.context.createBufferSource();
-        if (!this.source) {
-            return;
-        }
-        if (this.buffers[this.pointer]) {
-            this.source.buffer = this.buffers[this.pointer] || null;
-        }
-
-        // source -> gain
-        this.source.connect(this.gainNode);
-        // gain -> distination
-        this.gainNode.connect(this.context.destination);
-
-        this.gainNode.gain.value = this.volume;
-
-        // source -> analyser
-        this.source.connect(this.analyser);
-
-        this.time = Date.now();
-        this.source.start(0, resumeTime);
-        this.status = 'PLAY';
-
-        this.drawFrequency();
-        this.drawSinewave();
-    };
-
-    stop = () => {
-        this.status = 'STOP';
-        this.currentTime = 0;
-
-        this.gainNode?.gain.linearRampToValueAtTime(0, this.releaseTime);
-        setTimeout(() => {
-            this.source && this.source.stop(0);
-        }, this.releaseTime);
-    };
-
-    pause = async () => {
-        this.status = 'PAUSE';
-
-        if (this.currentTime) {
-            this.currentTime += (Date.now() - (this.time || 0)) / 1000;
-        } else {
-            this.currentTime = (Date.now() - (this.time || 0)) / 1000;
-        }
-
-        this.gainNode?.gain.linearRampToValueAtTime(0, this.releaseTime);
-        setTimeout(() => {
-            this.source && this.source.stop(0);
-        }, this.releaseTime);
-    };
-
-    private changeSourceAndBuffer = async () => {
-        const playing = this.status === 'PLAY';
-        this.buffer = this.buffers[this.pointer] || null;
-
-        this.stop();
-
-        setTimeout(() => {
-            if (!this.context) return;
-            playing && this.play(0);
-        }, 2);
-    };
-
-    nextsong = async () => {
-        if (this.pointer < this.buffers.length - 1) {
-            this.pointer += 1;
-        } else {
-            return;
-        }
-
-        await this.changeSourceAndBuffer();
-    };
-
-    lastsong = async () => {
-        if (this.pointer > 0) {
-            this.pointer -= 1;
-        } else {
-            return;
-        }
-
-        await this.changeSourceAndBuffer();
+    getTimestamp = () => {
+        return this.timestamp;
     };
 
     getVolume = () => {
-        return this.gainNode?.gain.value || 0;
+        return this.volume;
     };
 
     setVolume = (level: number) => {
@@ -221,6 +165,146 @@ export class AudioHandler {
         this.gainNode.gain.value = this.volume;
     };
 
+    play = (resumeTime = this.position ? this.position || 0 : 0) => {
+        if (
+            this.status === 'PLAY' ||
+            this.status === 'INIT' ||
+            this.status === 'BUSY' ||
+            !this.context ||
+            !this.gainNode ||
+            !this.analyser
+        ) {
+            return;
+        }
+
+        // don't interupt
+        this.status = 'BUSY';
+
+        this.source = this.context.createBufferSource();
+
+        if (!this.source) {
+            return;
+        }
+
+        this.source.buffer = this.buffers?.[this.pointer] || null;
+
+        // source -> gain
+        this.source.connect(this.gainNode);
+        // gain -> distination
+        this.gainNode.connect(this.context.destination);
+
+        this.gainNode.gain.value = this.volume;
+
+        // source -> analyser
+        this.source.connect(this.analyser);
+
+        // set start timestamp
+        this.timestamp = Date.now();
+
+        // dispath initial changeposition set interval for events for position
+        this.dispatchEvent('changeposition');
+
+        this.timestampHandler = (setInterval(() => {
+            this.dispatchEvent('changeposition');
+
+            const now = Date.now();
+            const delta = (now - (this.timestamp || 0)) / 1000;
+            this.position ? (this.position += delta) : (this.position = delta);
+            this.timestamp = now;
+
+            if (this.position && this.position > this.getDuration()) {
+                this.timestampHandler && clearInterval(this.timestampHandler);
+                this.dispatchEvent('onsongend');
+
+                this.position = 0;
+            }
+        }, this.timestampIntervalTick) as unknown) as NodeJS.Timeout; // TODO: fix this uglyness
+
+        // start the track at resume time
+        this.source.start(0, resumeTime);
+
+        // draw canvas
+        this.drawFrequency();
+        this.drawSinewave();
+
+        // done
+        this.status = 'PLAY';
+    };
+
+    dispatchEvent = (eventName: Events) => {
+        const event = new Event(eventName);
+        window.dispatchEvent(event);
+    };
+
+    stop = () => {
+        this.timestampHandler && clearInterval(this.timestampHandler);
+        this.status = 'STOP';
+        this.position = 0;
+
+        this.dispatchEvent('changeposition');
+
+        this.gainNode?.gain.linearRampToValueAtTime(0, this.releaseTime);
+
+        setTimeout(() => {
+            this.source && this.source.stop(0);
+        }, this.releaseTime);
+    };
+
+    pause = () => {
+        if (this.status === 'BUSY') {
+            return;
+        }
+
+        this.timestampHandler && clearInterval(this.timestampHandler);
+        this.status = 'PAUSE';
+
+        if (this.position) {
+            this.position += (Date.now() - (this.timestamp || 0)) / 1000;
+        } else {
+            this.position = (Date.now() - (this.timestamp || 0)) / 1000;
+        }
+
+        this.gainNode?.gain.linearRampToValueAtTime(0, this.releaseTime);
+
+        setTimeout(() => {
+            this.source && this.source.stop(0);
+        }, this.releaseTime);
+    };
+
+    private changeSourceAndBuffer = () => {
+        const playing = this.status === 'PLAY';
+
+        this.stop();
+        this.updateDuration();
+        this.updateSampleRate();
+
+        setTimeout(() => {
+            playing && this.play(0);
+        }, 20);
+    };
+
+    nextsong = () => {
+        if (this.pointer < this.buffers.length - 1) {
+            this.pointer += 1;
+        } else {
+            return;
+        }
+
+        this.changeSourceAndBuffer();
+    };
+
+    lastsong = () => {
+        if (this.getPosition() > 5 || this.pointer === 0) {
+            this.setPosition(0);
+        } else if (this.pointer > 0) {
+            this.pointer -= 1;
+        } else {
+            return;
+        }
+
+        this.changeSourceAndBuffer();
+    };
+
     private drawSinewave = () => {
         if (!this.sinewaveC || !this.analyser || !this.sinewaveDataArray || !this.sinewaveСanvasCtx || !this.styles) {
             return;
@@ -230,7 +314,7 @@ export class AudioHandler {
         requestAnimationFrame(this.drawSinewave);
 
         this.sinewaveСanvasCtx.fillStyle = this.styles.fillStyle;
-        this.sinewaveСanvasCtx.globalAlpha = 0.3;
+
         this.sinewaveСanvasCtx.fillRect(0, 0, this.sinewaveC.width, this.sinewaveC.height);
         this.sinewaveСanvasCtx.lineWidth = this.styles.lineWidth;
 

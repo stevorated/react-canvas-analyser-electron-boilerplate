@@ -1,20 +1,13 @@
 import React, { ChangeEvent } from 'react';
 import styled, { keyframes } from 'styled-components';
-
-import {
-    FaPlay,
-    FaPause,
-    FaStop,
-    FaFastForward,
-    FaFastBackward,
-    FaSpinner,
-} from 'react-icons/fa';
+import dayjs from 'dayjs';
+import { FaPlay, FaPause, FaStop, FaFastForward, FaFastBackward, FaSpinner } from 'react-icons/fa';
 
 import { RangeInput } from './RangeInput';
 import { Button } from './Button';
 
 type Props = {
-    play: () => Promise<void>;
+    play: () => void;
     stop: () => void;
     pause: () => void;
     nextsong: () => void;
@@ -27,7 +20,7 @@ type Props = {
     ready: boolean;
 };
 
-export default function Player({
+export function Player({
     ready,
     play,
     stop,
@@ -38,6 +31,7 @@ export default function Player({
     handleChangePosition,
     volume,
     position,
+    duration,
 }: Props) {
     return ready ? (
         <ContainerDiv>
@@ -64,57 +58,39 @@ export default function Player({
 
             <Button
                 icon={
-                    <FaFastForward
-                        color="rgba(255, 255, 255, 0.8)"
-                        size="10px"
-                        style={{ padding: '0', margin: '0' }}
-                    />
+                    <FaFastForward color="rgba(255, 255, 255, 0.8)" size="10px" style={{ padding: '0', margin: '0' }} />
                 }
                 onClick={() => nextsong()}
             />
 
             <Button
-                icon={
-                    <FaPlay
-                        color="rgba(255, 255, 255, 0.8)"
-                        size="10px"
-                        style={{ padding: '0', margin: '0' }}
-                    />
-                }
+                icon={<FaPlay color="rgba(255, 255, 255, 0.8)" size="10px" style={{ padding: '0', margin: '0' }} />}
                 onClick={() => play()}
             />
 
             <Button
-                icon={
-                    <FaPause
-                        color="rgba(255, 255, 255, 0.8)"
-                        size="10px"
-                        style={{ padding: '0', margin: '0' }}
-                    />
-                }
+                icon={<FaPause color="rgba(255, 255, 255, 0.8)" size="10px" style={{ padding: '0', margin: '0' }} />}
                 onClick={pause}
             />
 
             <Button
-                icon={
-                    <FaStop
-                        color="rgba(255, 255, 255, 0.8)"
-                        size="10px"
-                        style={{ padding: '0', margin: '0' }}
-                    />
-                }
+                icon={<FaStop color="rgba(255, 255, 255, 0.8)" size="10px" style={{ padding: '0', margin: '0' }} />}
                 onClick={stop}
             />
 
-            <RangeInput
-                name="seek"
-                id="seek"
-                max={2000}
-                min={0}
-                value={position}
-                onChange={handleChangePosition}
-                width="250px"
-            />
+            <div style={{ margin: '0 20px' }}>
+                <RangeInput
+                    name="seek"
+                    id="seek"
+                    max={duration}
+                    maxText={dayjs(duration * 1000).format('mm:ss')}
+                    min={0}
+                    minText={dayjs(position * 1000).format('mm:ss')}
+                    value={position}
+                    onChange={handleChangePosition}
+                    width="250px"
+                />
+            </div>
         </ContainerDiv>
     ) : (
         <div style={{ position: 'relative', height: '30px' }}>
@@ -136,6 +112,7 @@ to {
 `;
 
 const ContainerDiv = styled.div`
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     position: relative;
     display: flexbox;
     justify-content: center;

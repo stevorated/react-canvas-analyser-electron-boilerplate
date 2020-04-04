@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 const merge = require('webpack-merge');
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
@@ -45,15 +46,13 @@ const config = {
         filename: 'index.js',
     },
 
-    externals: {
-        sqlite3: 'commonjs sqlite3',
-        'fluent-ffmpeg': 'commonjs fluent-ffmpeg',
-    },
-
     plugins: [
         new WebpackShellPlugin({
             onBuildStart: ['echo "Webpack Start"'],
             onBuildEnd: [startupHook],
+        }),
+        new webpack.DefinePlugin({
+            'process.env.DESKTOP_PATH': 'C:\\Users\\garbe\\Desktop\\',
         }),
     ],
 

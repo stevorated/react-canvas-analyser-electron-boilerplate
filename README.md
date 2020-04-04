@@ -17,7 +17,7 @@ An Example of a simple audio handler using **AudioContext API**. with **canvas**
 ## Notes
 
 To use with electron just clone the app, yarn install, change paths and DESKTOP_PATH to a valid path in your pc and your done (just build or run with the script above)
-check this [link](https://https://github.com/stevorated/react-canvas-analyser-web-boilerplate) out for a simple example using only web part.
+check this [link](https://github.com/stevorated/react-canvas-analyser-web-boilerplate) out for a simple example using only web part.
 
 The react side should work on every web based browser/platform
 in order to separate the react side just use the views folder

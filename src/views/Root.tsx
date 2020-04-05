@@ -24,11 +24,13 @@ export function Root() {
 
     // canvas draw styles
     const styles = {
-        fillStyle: 'rgba(200, 200, 200)',
-        strokeStyle: 'rgba(0, 0,255)',
-        lineWidth: 1.2,
+        fillStyleSinewave: 'rgba(200, 200, 200)',
+        fillStyleFrequency: 'rgba(200, 200, 200)',
+        strokeStyleSinewave: 'rgba(255, 0, 0)',
+        // strokeStyle: 'rgba(0, 0,255)',
+        lineWidth: 1.5,
         level: 100,
-        fftSize: 4096, // delization of bars from 1024 to 32768
+        fftSize: 256, // delization of bars from 256 to 32768
     };
 
     // componentDidMount like..
